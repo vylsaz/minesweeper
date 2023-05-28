@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Mine</title>
+        <meta charset="UTF-8">
+        <style>
+            @font-face {
+                font-family: "APL385";
+                src: local("APL385 Unicode"), url("//cdn.dyalog.com/fonts/Apl385.eot");
+            }
+            button, span {
+                font-family: "APL385"; 
+            }
+            div {
+                display: flex;
+                justify-content: center;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            table {
+                align-self: center;
+                border-spacing: 0px;
+                background-color: #666666;
+                user-select: none;
+            }
+            .cell {
+                margin: 0px;
+                border: 2px solid;
+                border-color: #eeeeee #999999 #999999 #eeeeee;
+                background-color: #cccccc;
+                padding: 0px;
+                vertical-align: middle;
+                text-align: center;
+                box-sizing: border-box;
+                width: 24px;
+                height: 24px;
+                max-width: 24px;
+                min-width: 24px;
+                max-height: 24px;
+                min-height: 24px;
+                font-size: 16px;
+                font-family: "APL385"; 
+                font-weight: bold;
+                cursor: pointer;
+            }
+            .open {
+                background-color: #bbbbbb;
+                border-width: 1px;
+                border-color: #999999;
+                padding: 1px;
+                cursor: default;
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+            <table id="tab"></table>
+            <button id="restart">Restart</button>
+            <span id="text"></span>
+        </div>
+        <script>
+            const socket = new WebSocket("ws://dyalog_root/");
+            
+            const height = $height, width = $width;
+            const table = document.getElementById("tab");
+            const restart = document.getElementById("restart");
+            const text = document.getElementById("text");
+
+            let cells = [];
+            
+            for (let m = 0; m<height; ++m) {
+                const r = table.insertRow();
+                for (let n = 0; n<width; ++n) {
+                    const c = r.insertCell();
+                    cells.push(c);
+                }
+            }
+
+            restart.addEventListener("click", e => {
+                socket.send(JSON.stringify([2, 0]));
+            });
+
+            function init() {
+                for (let i = 0; i < cells.length; ++i) {
+                    const ii = i;
+                    const cell = cells[i];
+                    cell.className = "cell";
+                    cell.innerHTML = "&nbsp";
+                    cell.addEventListener("click", e => {
+                        e.stopPropagation();
+                        socket.send(JSON.stringify([0, ii]));
+                    });
+                    cell.addEventListener("contextmenu", e => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        socket.send(JSON.stringify([1, ii]));
+                    });
+                }
+            }
+            init();
+
+            const colors = {
+                "1": "#3333cc",
+                "2": "#006600",
+                "3": "#cc0000",
+                "4": "#660066",
+                "5": "#006666"
+            }
+
+            function render(txt, str) {
+                text.innerText = txt;
+                for (let i = 0; i < cells.length; ++i) {
+                    const cell = cells[i];
+                    const c = str.charAt(i);
+                    if (c===".") {
+                        cell.innerHTML = "&nbsp";
+                        cell.style.color = "#000000";
+                        cell.classList.remove("open");
+                    }
+                    else if (c===" ") {
+                        cell.innerHTML = "&nbsp";
+                        cell.style.color = "#000000";
+                        cell.classList.add("open");
+                    }
+                    else if (c in colors) {
+                        cell.innerText = c;
+                        cell.style.color = colors[c];
+                        cell.classList.add("open");
+                    }
+                    else if (c==="@") {
+                        cell.innerText = "@";
+                        cell.style.color = "#000000";
+                        cell.classList.add("open");
+                    }
+                    else {
+                        cell.innerText = c;
+                        cell.style.color = "#000000";
+                        cell.classList.remove("open");
+                    }
+                }
+            }
+
+            socket.addEventListener("message", e => {
+                if (typeof e.data === "string") {
+                    const json = JSON.parse(e.data);
+                    render(json.t, json.f);
+                }
+            });
+
+        </script>
+    </body>
+</html>

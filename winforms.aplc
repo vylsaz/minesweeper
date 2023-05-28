@@ -1,0 +1,86 @@
+:Class winforms
+    :Using System
+    :Using System.Windows.Forms,System.Windows.Forms.dll
+    :Using System.Drawing,System.Drawing.dll
+    
+    (⎕IO ⎕ML)←0 1
+
+    :Field obj
+    :Field frm
+    :Field btns
+    :Field lbl
+
+    ∇   updateFlagged;cnt  
+        cnt←+/'?'=,obj.field
+        lbl.Text←'Mines: ',⍕obj.m-cnt   
+    ∇
+
+    ∇   Click arg;b;e;r
+        (b e)←arg
+        :If e.Button≡MouseButtons.Left
+            r←0 obj.Game obj.f⊤b.TabIndex
+        :ElseIf e.Button≡MouseButtons.Right
+            r←1 obj.Game obj.f⊤b.TabIndex
+            updateFlagged
+        :Else
+            ⎕←1
+        :End
+        {}btns{
+            ⍵≡'.': 0⊣⍺.Text←,' '⊣⍺.Enabled←1
+            ⍵≡'?': 0⊣⍺.Text←,'?'⊣⍺.Enabled←1
+            ⍺.Enabled←0
+            ⍺.Text←,⍵
+            0
+        }¨,obj.field
+        :If r≡1
+            lbl.Text←'Win'
+        :ElseIf r≡¯1
+            lbl.Text←'Boom'
+        :EndIf
+    ∇   
+
+    :Field Shared ReadOnly SIZE←50 50
+    :Field Shared ReadOnly MARGIN←5
+    
+    ∇   makeBoard;F;h;w
+        lbl←⎕NEW Label
+        lbl.Location←⎕NEW Point(MARGIN+0,SIZE[0]×obj.f[0])
+        lbl.Font←⎕NEW Font('APL385 Unicode' 12)
+        lbl.AutoSize←1
+        updateFlagged
+
+        F←{+\0,⍺⍴⍨⍵-1}
+        h←SIZE[0] F obj.f[0] 
+        w←SIZE[1] F obj.f[1] 
+        btns←(⍳×/obj.f){
+            r←⎕NEW Button
+            r.Text←,' '
+            r.Font←⎕NEW Font('APL385 Unicode' 16)
+            r.Size←⎕NEW Size(SIZE)
+            r.Location←⎕NEW Point ⍵
+            r.TabStop←0
+            r.TabIndex←⍺ 
+            r
+        }¨MARGIN+,⍉w∘.,h
+    ∇
+
+    ∇   make1 arg
+        :Access Public
+        :Implements Constructor
+        obj←arg
+        frm←⎕NEW Form
+        frm.Text←'Mine'
+        frm.AutoScaleMode←AutoScaleMode.Dpi
+        frm.AutoSize←1
+        makeBoard
+        frm.Controls.Add¨btns
+        frm.Controls.Add lbl
+        btns.onMouseDown←⎕OR'Click'
+    ∇
+
+    ∇   loop
+        :Access Public
+        Application.Run frm
+    ∇
+
+:EndClass

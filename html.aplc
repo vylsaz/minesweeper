@@ -1,0 +1,71 @@
+:Class html
+    (⎕IO ⎕ML)←0 1
+
+    :Field id←''
+    :Field hr
+    :Field stop←0
+    :Field page
+    :Field game
+
+    :Field Shared ReadOnly FILE←'./index.html'
+    Read←(⊃∘⎕NGET)
+    Size←{('\$width'⎕R(⍕⍺[1]))('\$height'⎕R(⍕⍺[0]))⍵}
+
+    ∇   make1 arg
+        :Access Public
+        :Implements Constructor
+        game←arg
+        page←arg.f Size Read FILE
+    ∇ 
+
+    ∇   OnUpgrade arg
+        id←2⊃arg
+    ∇
+
+    ∇   txt Send str;json
+        :If stop≡1 ⋄ :Return ⋄ :EndIf
+        json←⎕NS'' ⋄ json.t←txt ⋄ json.f←str
+        {}hr.WebSocketSend id (1 ⎕JSON json) 1 1
+    ∇
+
+    ∇   r←Text v;cnt
+        :Select v
+        :Case 0
+            cnt←+/'?'=,game.field
+            r←'Mines: ',⍕game.m-cnt 
+        :Case ¯1
+            r←'Boom'
+        :Case 1
+            r←'Win'
+        :EndSelect
+    ∇
+
+    ∇   OnRecv arg;k;p;r
+        (k p)←⎕JSON 3⊃arg
+        :If k≡2
+            r←game.(Init(f m))
+        :Else
+            r←k game.Game game.f⊤p
+        :EndIf
+        (Text r)Send ,game.field
+    ∇
+
+    ∇   OnClose arg
+        stop←1
+    ∇
+
+    ∇   MakeWindow win_size;ev;pa;msg
+        :If id≢'' ⋄ 'Reload the window'⎕SIGNAL 16 ⋄ :EndIf
+        ev←('WebSocketUpgrade' 'OnUpgrade')('WebSocketReceive' 'OnRecv')('Close' 'OnClose')
+        pa←('Event',⍥⊆ev)('Coord' 'Pixel')('Size'win_size)('HTML'page)
+        {_←'hr'⎕WC'HTMLRenderer',⍥⊆⍵ ⋄ ⎕DQ'hr'}&pa
+        :While (id≡'')∧stop≢1 ⋄ ⎕DL 0.05 ⋄ :EndWhile
+    ∇
+
+    ∇   loop
+        :Access Public
+        MakeWindow 100 20+24×game.f
+        (Text 0)Send ,game.field
+    ∇
+
+:EndClass
