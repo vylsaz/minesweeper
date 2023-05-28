@@ -122,20 +122,25 @@
                         cell.style.color = "#000000";
                         cell.classList.add("open");
                     }
-                    else if (c in colors) {
+                    else if (c==="?") {
                         cell.innerText = c;
-                        cell.style.color = colors[c];
-                        cell.classList.add("open");
+                        cell.style.color = "#000000";
+                        cell.classList.remove("open");
                     }
                     else if (c==="@") {
                         cell.innerText = "@";
                         cell.style.color = "#000000";
                         cell.classList.add("open");
                     }
+                    else if (c in colors) {
+                        cell.innerText = c;
+                        cell.style.color = colors[c];
+                        cell.classList.add("open");
+                    }
                     else {
                         cell.innerText = c;
                         cell.style.color = "#000000";
-                        cell.classList.remove("open");
+                        cell.classList.add("open");
                     }
                 }
             }
