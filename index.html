@@ -66,13 +66,12 @@
             const restart = document.getElementById("restart");
             const text = document.getElementById("text");
 
-            let cells = [];
+            let cells = []; let ena = 1;
             
             for (let m = 0; m<height; ++m) {
                 const r = table.insertRow();
                 for (let n = 0; n<width; ++n) {
-                    const c = r.insertCell();
-                    cells.push(c);
+                    cells.push(r.insertCell());
                 }
             }
 
@@ -88,23 +87,24 @@
                     cell.innerHTML = "&nbsp";
                     cell.addEventListener("click", e => {
                         e.stopPropagation();
-                        socket.send(JSON.stringify([0, ii]));
+                        if (ena===1) {
+                            socket.send(JSON.stringify([0, ii]));
+                        }
                     });
                     cell.addEventListener("contextmenu", e => {
                         e.stopPropagation();
                         e.preventDefault();
-                        socket.send(JSON.stringify([1, ii]));
+                        if (ena===1) {
+                            socket.send(JSON.stringify([1, ii]));
+                        }
                     });
                 }
             }
             init();
 
             const colors = {
-                "1": "#3333cc",
-                "2": "#006600",
-                "3": "#cc0000",
-                "4": "#660066",
-                "5": "#006666"
+                "1": "#3333cc", "2": "#006600", "3": "#cc0000", 
+                "4": "#660066", "5": "#006666"
             }
 
             function render(txt, str) {
@@ -148,6 +148,7 @@
             socket.addEventListener("message", e => {
                 if (typeof e.data === "string") {
                     const json = JSON.parse(e.data);
+                    ena = json.v;
                     render(json.t, json.f);
                 }
             });

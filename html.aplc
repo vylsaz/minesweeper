@@ -22,9 +22,9 @@
         id←2⊃arg
     ∇
 
-    ∇   txt Send str;json
+    ∇   lef Send str;json
         :If stop≡1 ⋄ :Return ⋄ :EndIf
-        json←⎕NS'' ⋄ json.t←txt ⋄ json.f←str
+        json←⎕NS'' ⋄ json.(v t)←lef ⋄ json.f←str
         {}hr.WebSocketSend id (1 ⎕JSON json) 1 1
     ∇
 
@@ -32,11 +32,11 @@
         :Select v
         :Case 0
             cnt←+/'?'=,game.field
-            r←'Mines: ',⍕game.m-cnt 
+            r←1('Mines: ',⍕game.m-cnt) 
         :Case ¯1
-            r←'Boom'
+            r←0('Boom')
         :Case 1
-            r←'Win'
+            r←0('Win')
         :EndSelect
     ∇
 
