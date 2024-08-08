@@ -4,27 +4,36 @@
     :Field id←''
     :Field hr
     :Field stop←0
-    :Field page
     :Field game
+    :Field html
+    :Field js
 
-    :Field Shared ReadOnly FILE←'./index.html'
+    :Field Shared ReadOnly LOAD←18<⍎⊃'.'(≠⊆⊢)1⊃#⎕WG'APLVersion'
+    :Field Shared ReadOnly HTML←'./index.html'
+    :Field Shared ReadOnly JS←'./index.js'
     Read←(⊃∘⎕NGET)
-    Size←{('\$width'⎕R(⍕⍺[1]))('\$height'⎕R(⍕⍺[0]))⍵}
 
     ∇   make1 arg
         :Access Public
         :Implements Constructor
         game←arg
-        page←arg.f Size Read FILE
+        html←Read HTML
+        js  ←Read JS
     ∇ 
 
     ∇   OnUpgrade arg
         id←2⊃arg
     ∇
 
-    ∇   lef Send str;json
-        :If stop≡1 ⋄ :Return ⋄ :EndIf
-        json←⎕NS'' ⋄ json.(v t)←lef ⋄ json.f←str
+    ∇   init;json
+        :If stop≡1 ⋄ :Return  ⋄ :EndIf
+        json←⎕NS'' ⋄ json.k←0 ⋄ json.(h w)←game.f
+        {}hr.WebSocketSend id (1 ⎕JSON json) 1 1
+    ∇
+
+    ∇   Send arg;json
+        :If stop≡1 ⋄ :Return  ⋄ :EndIf
+        json←⎕NS'' ⋄ json.k←1 ⋄ json.(v t)←arg ⋄ json.f←,game.field
         {}hr.WebSocketSend id (1 ⎕JSON json) 1 1
     ∇
 
@@ -47,25 +56,36 @@
         :Else
             r←k game.Game game.f⊤p
         :EndIf
-        (Text r)Send ,game.field
+        Send Text r
     ∇
 
     ∇   OnClose arg
         stop←1
     ∇
 
-    ∇   MakeWindow win_size;ev;pa;msg
+    ∇   OnLoad arg;r
+        hr.ExecuteJavaScript js
+    ∇
+
+    ∇   makeWindow;ev;pa;msg
         :If id≢'' ⋄ 'Reload the window'⎕SIGNAL 16 ⋄ :EndIf
         ev←('WebSocketUpgrade' 'OnUpgrade')('WebSocketReceive' 'OnRecv')('Close' 'OnClose')
-        pa←('Event',⍥⊆ev)('Coord' 'Pixel')('Size'win_size)('HTML'page)
+        :If LOAD
+            ev,←⊂'LoadEnd' 'OnLoad'
+        :EndIf
+        pa←('Event',⍥⊆ev)('HTML'html),{⍵(⎕SE⎕WG⍵)}¨'Coord' 'Size'
         {_←'hr'⎕WC'HTMLRenderer',⍥⊆⍵ ⋄ ⎕DQ'hr'}&pa
-        :While (id≡'')∧stop≢1 ⋄ ⎕DL 0.05 ⋄ :EndWhile
+        :If ~LOAD
+            OnLoad 0
+        :EndIf
+        :While (id≡'')∧stop≢1 ⋄ ⎕DL 0.01 ⋄ :EndWhile
     ∇
 
     ∇   loop
         :Access Public
-        MakeWindow 100 20+24×game.f
-        (Text 0)Send ,game.field
+        makeWindow
+        init
+        Send Text 0
     ∇
 
 :EndClass
