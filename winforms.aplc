@@ -9,22 +9,14 @@
     :Field frm
     :Field btns
     :Field lbl
+    :Field redo
 
     ∇   updateFlagged;cnt  
         cnt←+/'?'=,obj.field
         lbl.Text←'Mines: ',⍕obj.m-cnt   
     ∇
 
-    ∇   Click arg;b;e;r
-        (b e)←arg
-        :If e.Button≡MouseButtons.Left
-            r←0 obj.Game obj.f⊤b.TabIndex
-        :ElseIf e.Button≡MouseButtons.Right
-            r←1 obj.Game obj.f⊤b.TabIndex
-            updateFlagged
-        :Else
-            ⎕←1
-        :End
+    ∇   updateButtons
         {}btns{
             ⍵≡'.': 0⊣⍺.Text←,' '⊣⍺.Enabled←1
             ⍵≡'?': 0⊣⍺.Text←,'?'⊣⍺.Enabled←1
@@ -32,12 +24,38 @@
             ⍺.Text←,⍵
             0
         }¨,obj.field
+    ∇
+
+    ∇   Result r
         :If r≡1
             lbl.Text←'Win'
         :ElseIf r≡¯1
             lbl.Text←'Boom'
         :EndIf
+    ∇
+
+    ∇   Click arg;b;e
+        (b e)←arg
+        :If e.Button≡MouseButtons.Left
+            Result 0 obj.Game obj.f⊤b.TabIndex
+        :ElseIf e.Button≡MouseButtons.Right
+            Result 1 obj.Game obj.f⊤b.TabIndex
+            updateFlagged
+        :Else
+            ⎕←1
+        :End
+        updateButtons
     ∇   
+
+    ∇   Restart arg;b;e
+        (b e)←arg
+        :If e.Button≡MouseButtons.Right
+            :Return
+        :End
+        Result obj.(Init(f m))
+        updateFlagged
+        updateButtons
+    ∇
 
     :Field Shared ReadOnly SIZE←50 50
     :Field Shared ReadOnly MARGIN←5
@@ -62,6 +80,12 @@
             r.TabIndex←⍺ 
             r
         }¨MARGIN+,⍉w∘.,h
+
+        redo←⎕NEW Button
+        redo.Text←'Restart'
+        redo.Font←⎕NEW Font('APL385 Unicode' 12)
+        redo.Location←⎕NEW Point(MARGIN,50+SIZE[0]×obj.f[0])
+        redo.AutoSize←1
     ∇
 
     ∇   make1 arg
@@ -75,7 +99,9 @@
         makeBoard
         frm.Controls.Add¨btns
         frm.Controls.Add lbl
+        frm.Controls.Add redo
         btns.onMouseDown←⎕OR'Click'
+        redo.onMouseDown←⎕OR'Restart'
     ∇
 
     ∇   loop
